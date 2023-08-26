@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
@@ -47,14 +46,14 @@ func TestTodoCLI(t *testing.T) {
 	binFilePath := filepath.Join(dir, tempBinFileName)
 
 	t.Run("AddNewTodo", func(t *testing.T) {
-		cmd := exec.Command(binFilePath, strings.Split(newTodoTaskName, " ")...)
+		cmd := exec.Command(binFilePath, "-add", newTodoTaskName)
 		if err := cmd.Run(); err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("ListTodos", func(t *testing.T) {
-		cmd := exec.Command(binFilePath)
+		cmd := exec.Command(binFilePath, "-list")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatal(err)
