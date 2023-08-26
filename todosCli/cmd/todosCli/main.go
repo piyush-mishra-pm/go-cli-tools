@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	todoscli "piyush-mishra-pm/go-cli-tools/todosCli"
+	"strings"
 )
 
 // Hardcoded save file name:
@@ -20,7 +23,7 @@ func main() {
 	}
 
 	// Parse Flags:
-	addTodoTaskName := flag.String("add", "", "Todo item to be added in TodoList")
+	addTodo := flag.Bool("add", false, "If adding new Todo")
 	list := flag.Bool("list", false, "List all todos.")
 	complete := flag.Int("complete", 0, "Todo Index (1 based) to be marked completed")
 
@@ -51,8 +54,15 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-	case *addTodoTaskName != "":
-		todoList.Add(*addTodoTaskName)
+	case *addTodo:
+		// Read and join to get the new todo task name.
+		todoNameToAdd, err := getTask(os.Stdin, flag.Args()...)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		todoList.Add(todoNameToAdd)
+		// Save the new list
 		if err := todoList.SerializeAndSave(todoListFileName); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -66,4 +76,19 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Invalid option")
 		os.Exit(1)
 	}
+}
+
+func getTask(r io.Reader, args ...string) (string, error) {
+	if len(args) > 0 {
+		return strings.Join(args, " "), nil
+	}
+	scanner := bufio.NewScanner(r)
+	scanner.Scan()
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	if len(scanner.Text()) == 0 {
+		return "", fmt.Errorf("Todo cannot be blank")
+	}
+	return scanner.Text(), nil
 }
