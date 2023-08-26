@@ -15,6 +15,13 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	// Temporarily disable filename set in envt variable.
+	val := os.Getenv("TODO_FILENAME")
+	if val != "" {
+		os.Unsetenv("TODO_FILENAME")
+		defer os.Setenv("TODO_FILENAME", val)
+	}
+
 	fmt.Println("🔧 Building todosCli tool :")
 
 	if runtime.GOOS == "windows" {
