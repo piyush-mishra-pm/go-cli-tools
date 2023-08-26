@@ -11,6 +11,14 @@ import (
 const todoListFileName = ".todo.json"
 
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(),
+			"%s tool. Developed by Piyush Mishra\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Copyright 2023\n")
+		fmt.Fprintln(flag.CommandLine.Output(), "Usage information:")
+		flag.PrintDefaults()
+	}
+
 	// Parse Flags:
 	addTodoTaskName := flag.String("add", "", "Todo item to be added in TodoList")
 	list := flag.Bool("list", false, "List all todos.")
@@ -27,11 +35,7 @@ func main() {
 
 	switch {
 	case *list:
-		for _, todoItem := range *todoList {
-			if !todoItem.Done {
-				fmt.Println(todoItem.Task)
-			}
-		}
+		fmt.Print(todoList)
 	case *complete > 0:
 		// Mark the given todo task as complete.
 		if err := todoList.Complete(*complete); err != nil {

@@ -58,7 +58,8 @@ func TestTodoCLI(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		expected := newTodoTaskName + "\n"
+
+		expected := fmt.Sprintf("[ ] 1: %s\n", newTodoTaskName)
 		if expected != string(out) {
 			t.Errorf("Expected %q, got %q instead\n", expected, string(out))
 		}

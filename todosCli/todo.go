@@ -83,6 +83,21 @@ func (tl *TodoList) DeserializeAndLoad(filename string) error {
 	return json.Unmarshal(fileContent, tl)
 }
 
+func (tl *TodoList) String() string {
+	stringifiedTodoList := ""
+	for index, todoItem := range *tl {
+		var prefix string
+		if todoItem.Done {
+			prefix = "[X] "
+		} else {
+			prefix = "[ ] "
+		}
+		// Adjust the item number k to print numbers starting from 1 instead of 0
+		stringifiedTodoList += fmt.Sprintf("%s%d: %s\n", prefix, index+1, todoItem.Task)
+	}
+	return stringifiedTodoList
+}
+
 // Checks if 1 based index is out of range.
 func isIndexOutOfRange(index int, tl *TodoList) bool {
 	if index <= 0 || index > len(*tl) {
