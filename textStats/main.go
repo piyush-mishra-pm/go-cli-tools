@@ -2,18 +2,30 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 )
 
 func main() {
-	fmt.Println(fmt.Sprint(countWords(os.Stdin), " words"))
+	isLineMode := flag.Bool("l", false, "Count lines")
+	flag.Parse()
+	fmt.Print(countWords(os.Stdin, *isLineMode))
+	if *isLineMode {
+		fmt.Print(" lines")
+	} else {
+		fmt.Print(" words")
+	}
 }
 
-func countWords(r io.Reader) int {
+func countWords(r io.Reader, isLineMode bool) int {
 	scanner := bufio.NewScanner(r)
-	scanner.Split(bufio.ScanWords)
+
+	if !isLineMode {
+		scanner.Split(bufio.ScanWords)
+	}
+
 	wc := 0
 	for scanner.Scan() {
 		wc++
