@@ -9,26 +9,36 @@ import (
 )
 
 func main() {
+	// Flags:
 	isLineMode := flag.Bool("l", false, "Count lines")
+	isByteMode := flag.Bool("b", false, "Count bytes")
 	flag.Parse()
-	fmt.Print(countWords(os.Stdin, *isLineMode))
+
+	// Execute count:
+	fmt.Print(count(os.Stdin, *isLineMode, *isByteMode))
+
+	// Print suffix to result.
 	if *isLineMode {
 		fmt.Print(" lines")
+	} else if *isByteMode {
+		fmt.Print(" bytes")
 	} else {
 		fmt.Print(" words")
 	}
 }
 
-func countWords(r io.Reader, isLineMode bool) int {
+func count(r io.Reader, isLineMode bool, isByteMode bool) int {
 	scanner := bufio.NewScanner(r)
 
-	if !isLineMode {
+	if !isLineMode && !isByteMode {
 		scanner.Split(bufio.ScanWords)
-	}
+	} else if isByteMode {
+		scanner.Split(bufio.ScanBytes)
+	} // default isLineMode
 
-	wc := 0
+	count := 0
 	for scanner.Scan() {
-		wc++
+		count++
 	}
-	return wc
+	return count
 }
