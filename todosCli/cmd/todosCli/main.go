@@ -8,7 +8,7 @@ import (
 )
 
 // Hardcoded save file name:
-const todoListFileName = ".todo.json"
+var todoListFileName = ".todo.json"
 
 func main() {
 	flag.Usage = func() {
@@ -25,6 +25,10 @@ func main() {
 	complete := flag.Int("complete", 0, "Todo Index (1 based) to be marked completed")
 
 	flag.Parse()
+
+	if os.Getenv("TODO_FILENAME") != "" {
+		todoListFileName = os.Getenv("TODO_FILENAME")
+	}
 
 	todoList := &todoscli.TodoList{}
 	loadErr := todoList.DeserializeAndLoad(todoListFileName)
