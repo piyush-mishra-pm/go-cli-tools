@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"html/template"
 	"io"
 	"os"
 	"os/exec"
@@ -15,24 +16,29 @@ import (
 )
 
 const (
-	htmlHeader = `<!DOCTYPE html>
-	<html>
+	defaultTemplate = `<!DOCTYPE html>
+<html>
 	<head>
-	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>Markdown Preview Tool</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>{{ .Title }}</title>
 	</head>
 	<body>
-	`
-	htmlFooter = `
+	{{ .Body }}
 	</body>
-	</html>
-	`
+</html>
+`
 )
+
+type content struct {
+	Title string
+	Body  template.HTML
+}
 
 func main() {
 	// Parse flags:
 	mdFilename := flag.String("file", "", "Markdown file to preview")
 	skipPreview := flag.Bool("skip-preview", false, "Skip automatic Markdown Preview")
+	templateFileName := flag.String("template", "", "User defined Template filename")
 	flag.Parse()
 
 	// If no mdFilename as input, then show Usage:
@@ -41,19 +47,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := run(*mdFilename, os.Stdout, *skipPreview); err != nil {
+	if err := run(*mdFilename, *templateFileName, os.Stdout, *skipPreview); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(mdFilename string, out io.Writer, skipPreview bool) error {
+func run(mdFilename, tempFileName string, out io.Writer, skipPreview bool) error {
 	mdFileContent, err := os.ReadFile(mdFilename)
 	if err != nil {
 		return err
 	}
 
-	htmlContent := parseMdFileContent(mdFileContent)
+	htmlContent, err := parseMdFileContent(mdFileContent, tempFileName)
+	if err != nil {
+		return err
+	}
 
 	// Write in temp file and check for errors.
 	tempFile, err := os.CreateTemp("", "markdown_preview*.html")
@@ -65,7 +74,6 @@ func run(mdFilename string, out io.Writer, skipPreview bool) error {
 	}
 
 	outHtmlFileName := tempFile.Name()
-	defer os.Remove(outHtmlFileName)
 
 	fmt.Fprintln(out, outHtmlFileName)
 
@@ -76,21 +84,43 @@ func run(mdFilename string, out io.Writer, skipPreview bool) error {
 	if skipPreview {
 		return nil
 	}
+
+	defer os.Remove(outHtmlFileName)
+
 	return preview(outHtmlFileName)
 }
 
-func parseMdFileContent(mdFileContent []byte) []byte {
+func parseMdFileContent(mdFileContent []byte, templateFileName string) ([]byte, error) {
 	// Parse and Sanitise HTML Body using md file content.
 	htmlBodyOutput := blackfriday.Run(mdFileContent)
 	sanitisedHtmlBodyOutput := bluemonday.UGCPolicy().SanitizeBytes(htmlBodyOutput)
 
+	// Parse the contents of the defaultTemplate const into a new Template
+	t, err := template.New("markdown_preview").Parse(defaultTemplate)
+	if err != nil {
+		return nil, err
+	}
+	// If user provided alternate template file, replace template
+	if templateFileName != "" {
+		t, err = template.ParseFiles(templateFileName)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// instantiate the content struct, adding the title and body
+	contentData := content{
+		Title: "Markdown Preview Go Tool",
+		Body:  template.HTML(sanitisedHtmlBodyOutput),
+	}
+
 	// Add header and Footer to Body.
 	var buffer bytes.Buffer
-	buffer.WriteString(htmlHeader)
-	buffer.Write(sanitisedHtmlBodyOutput)
-	buffer.WriteString(htmlFooter)
+	// Execute the template with the content type
+	if err := t.Execute(&buffer, contentData); err != nil {
+		return nil, err
+	}
 
-	return buffer.Bytes()
+	return buffer.Bytes(), nil
 }
 
 func saveHtml(outHtmlFileName string, htmlContent []byte) error {

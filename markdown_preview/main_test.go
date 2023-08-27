@@ -19,7 +19,10 @@ func TestParseContent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resultHtmlContent := parseMdFileContent(goldenMdFileContent)
+	resultHtmlContent, err := parseMdFileContent(goldenMdFileContent, "")
+	if err != nil {
+		t.Fatal(err)
+	}
 	expectedHtmlContent, err := os.ReadFile(goldenHtmlFile)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +36,7 @@ func TestParseContent(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	var mockStdOut bytes.Buffer
-	if err := run(goldenInputMdFile, &mockStdOut, true); err != nil {
+	if err := run(goldenInputMdFile, "", &mockStdOut, true); err != nil {
 		t.Fatal(err)
 	}
 	resultFileName := strings.TrimSpace(mockStdOut.String())
