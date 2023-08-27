@@ -33,7 +33,7 @@ func TestParseContent(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	var mockStdOut bytes.Buffer
-	if err := run(goldenInputMdFile, &mockStdOut); err != nil {
+	if err := run(goldenInputMdFile, &mockStdOut, true); err != nil {
 		t.Fatal(err)
 	}
 	resultFileName := strings.TrimSpace(mockStdOut.String())

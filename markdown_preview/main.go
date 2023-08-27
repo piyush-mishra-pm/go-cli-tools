@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"runtime"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
@@ -29,6 +31,7 @@ const (
 func main() {
 	// Parse flags:
 	mdFilename := flag.String("file", "", "Markdown file to preview")
+	skipPreview := flag.Bool("skip-preview", false, "Skip automatic Markdown Preview")
 	flag.Parse()
 
 	// If no mdFilename as input, then show Usage:
@@ -37,13 +40,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := run(*mdFilename, os.Stdout); err != nil {
+	if err := run(*mdFilename, os.Stdout, *skipPreview); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(mdFilename string, out io.Writer) error {
+func run(mdFilename string, out io.Writer, skipPreview bool) error {
 	mdFileContent, err := os.ReadFile(mdFilename)
 	if err != nil {
 		return err
@@ -63,7 +66,15 @@ func run(mdFilename string, out io.Writer) error {
 	outHtmlFileName := tempFile.Name()
 	fmt.Fprintln(out, outHtmlFileName)
 
-	return saveHtml(outHtmlFileName, htmlContent)
+	if err := saveHtml(outHtmlFileName, htmlContent); err != nil {
+		return err
+	}
+
+	if skipPreview {
+		return nil
+	}
+
+	return preview(outHtmlFileName)
 }
 
 func parseMdFileContent(mdFileContent []byte) []byte {
@@ -82,4 +93,30 @@ func parseMdFileContent(mdFileContent []byte) []byte {
 
 func saveHtml(outHtmlFileName string, htmlContent []byte) error {
 	return os.WriteFile(outHtmlFileName, htmlContent, 0644)
+}
+
+func preview(fname string) error {
+	cName := ""
+	cmdParams := []string{}
+	// Define execute utility based on OS
+	switch runtime.GOOS {
+	case "linux":
+		cName = "xdg-open"
+	case "windows":
+		cName = "cmd.exe"
+		cmdParams = []string{"/C", "start"}
+	case "darwin":
+		cName = "open"
+	default:
+		return fmt.Errorf("OS not supported")
+	}
+	// Append filename to command parameters
+	cmdParams = append(cmdParams, fname)
+	// Locate executable in PATH
+	cmdPath, err := exec.LookPath(cName)
+	if err != nil {
+		return err
+	}
+	// Open the file using default program
+	return exec.Command(cmdPath, cmdParams...).Run()
 }
