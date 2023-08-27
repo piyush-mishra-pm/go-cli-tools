@@ -4,4 +4,5 @@ use (
 	./textStats
 	./todosCli
 	./markdown_preview
+	./file_crawler
 )
