@@ -14,7 +14,10 @@ bin/
 # vendor/
 
 # Go workspace file
-go.work
+#go.work
 
 # Artifacts:
 *todo.json
+
+# os specific:
+.DS_Store
