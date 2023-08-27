@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"time"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
@@ -64,6 +65,8 @@ func run(mdFilename string, out io.Writer, skipPreview bool) error {
 	}
 
 	outHtmlFileName := tempFile.Name()
+	defer os.Remove(outHtmlFileName)
+
 	fmt.Fprintln(out, outHtmlFileName)
 
 	if err := saveHtml(outHtmlFileName, htmlContent); err != nil {
@@ -73,7 +76,6 @@ func run(mdFilename string, out io.Writer, skipPreview bool) error {
 	if skipPreview {
 		return nil
 	}
-
 	return preview(outHtmlFileName)
 }
 
@@ -117,6 +119,11 @@ func preview(fname string) error {
 	if err != nil {
 		return err
 	}
+
 	// Open the file using default program
-	return exec.Command(cmdPath, cmdParams...).Run()
+	err = exec.Command(cmdPath, cmdParams...).Run()
+
+	// Wait for browser to open file before (automatically) deleting.
+	time.Sleep(3 * time.Second)
+	return err
 }
