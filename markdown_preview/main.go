@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
@@ -37,13 +37,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := run(*mdFilename); err != nil {
+	if err := run(*mdFilename, os.Stdout); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(mdFilename string) error {
+func run(mdFilename string, out io.Writer) error {
 	mdFileContent, err := os.ReadFile(mdFilename)
 	if err != nil {
 		return err
@@ -51,8 +51,17 @@ func run(mdFilename string) error {
 
 	htmlContent := parseMdFileContent(mdFileContent)
 
-	outHtmlFileName := fmt.Sprintf("%s.html", filepath.Base(mdFilename))
-	fmt.Println(outHtmlFileName)
+	// Write in temp file and check for errors.
+	tempFile, err := os.CreateTemp("", "markdown_preview*.html")
+	if err != nil {
+		return err
+	}
+	if err := tempFile.Close(); err != nil {
+		return err
+	}
+
+	outHtmlFileName := tempFile.Name()
+	fmt.Fprintln(out, outHtmlFileName)
 
 	return saveHtml(outHtmlFileName, htmlContent)
 }

@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -30,10 +32,12 @@ func TestParseContent(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	if err := run(goldenInputMdFile); err != nil {
+	var mockStdOut bytes.Buffer
+	if err := run(goldenInputMdFile, &mockStdOut); err != nil {
 		t.Fatal(err)
 	}
-	resultHtmlContent, err := os.ReadFile(outputHtmlFile)
+	resultFileName := strings.TrimSpace(mockStdOut.String())
+	resultHtmlContent, err := os.ReadFile(resultFileName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,5 +50,6 @@ func TestRun(t *testing.T) {
 		t.Logf("resultHtml:\n%s\n", resultHtmlContent)
 		t.Error("Result html content does not match golden html file")
 	}
-	os.Remove(outputHtmlFile)
+	fmt.Println("Created and cleaned up tempFile:", resultFileName)
+	os.Remove(resultFileName)
 }
