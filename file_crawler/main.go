@@ -15,6 +15,8 @@ type config struct {
 	minSize int64
 	// list files?
 	listFiles bool
+	// Delete files"
+	deleteFiles bool
 }
 
 func main() {
@@ -22,6 +24,7 @@ func main() {
 	root := flag.String("root", ".", "Root directory to start crawling")
 	// Action options
 	listFiles := flag.Bool("list-file", false, "Only List files")
+	deleteFiles := flag.Bool("delete-file", false, "Delete files")
 	// Filter options
 	pickExtension := flag.String("pick-extension", "", "File extension to filter out")
 	minSize := flag.Int64("min-size", 0, "Minimum file size")
@@ -31,6 +34,7 @@ func main() {
 		pickExtension: *pickExtension,
 		minSize:       *minSize,
 		listFiles:     *listFiles,
+		deleteFiles:   *deleteFiles,
 	}
 
 	if err := run(*root, os.Stdout, launchConfigs); err != nil {
@@ -53,6 +57,12 @@ func run(rootDir string, out io.Writer, launchConfig config) error {
 			if launchConfig.listFiles {
 				return listFile(path, out)
 			}
+
+			// Delete Files:
+			if launchConfig.deleteFiles {
+				return deleteFile(path)
+			}
+
 			// List is the default option if nothing else was set
 			return listFile(path, out)
 		})
