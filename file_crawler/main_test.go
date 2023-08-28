@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -102,6 +103,64 @@ func TestRunDelExtension(t *testing.T) {
 			if len(lines) != expLogLines {
 				t.Errorf("Expected %d log lines, got %d instead\n",
 					expLogLines, len(lines))
+			}
+		})
+	}
+}
+
+func TestRunArchive(t *testing.T) {
+	// Archiving test cases
+	testCases := []struct {
+		name         string
+		launchConfig config
+		extNoArchive string
+		nArchive     int
+		nNoArchive   int
+	}{
+		{name: "ArchiveExtensionNoMatch",
+			launchConfig: config{pickExtension: ".log"},
+			extNoArchive: ".gz", nArchive: 0, nNoArchive: 10},
+		{name: "ArchiveExtensionMatch",
+			launchConfig: config{pickExtension: ".log"},
+			extNoArchive: "", nArchive: 10, nNoArchive: 0},
+		{name: "ArchiveExtensionMixed",
+			launchConfig: config{pickExtension: ".log"},
+			extNoArchive: ".gz", nArchive: 5, nNoArchive: 5},
+	}
+	// Execute RunArchive test cases
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Buffer for RunArchive output
+			var buffer bytes.Buffer
+			// Create temp dirs for RunArchive test
+			tempDir, cleanup := createTempDir(t, map[string]int{
+				tc.launchConfig.pickExtension: tc.nArchive,
+				tc.extNoArchive:               tc.nNoArchive,
+			})
+			defer cleanup()
+			archiveDir, cleanupArchive := createTempDir(t, nil)
+			defer cleanupArchive()
+			tc.launchConfig.archive = archiveDir
+			if err := run(tempDir, &buffer, tc.launchConfig); err != nil {
+				t.Fatal(err)
+			}
+			pattern := filepath.Join(tempDir, fmt.Sprintf("*%s", tc.launchConfig.pickExtension))
+			expFiles, err := filepath.Glob(pattern)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expOut := strings.Join(expFiles, "\n")
+			res := strings.TrimSpace(buffer.String())
+			if expOut != res {
+				t.Errorf("Expected %q, got %q instead\n", expOut, res)
+			}
+			filesArchived, err := os.ReadDir(archiveDir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(filesArchived) != tc.nArchive {
+				t.Errorf("Expected %d files archived, got %d instead\n",
+					tc.nArchive, len(filesArchived))
 			}
 		})
 	}

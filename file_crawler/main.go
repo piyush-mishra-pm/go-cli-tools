@@ -20,6 +20,8 @@ type config struct {
 	deleteFiles bool
 	// log File
 	logFile io.Writer
+	// archive dir
+	archive string
 }
 
 func main() {
@@ -29,6 +31,7 @@ func main() {
 	// Action options
 	listFiles := flag.Bool("list-file", false, "Only List files")
 	deleteFiles := flag.Bool("delete-file", false, "Delete files")
+	archive := flag.String("archive", "", "Archive Directory location")
 	// Filter options
 	pickExtension := flag.String("pick-extension", "", "File extension to filter out")
 	minSize := flag.Int64("min-size", 0, "Minimum file size")
@@ -54,6 +57,7 @@ func main() {
 		listFiles:     *listFiles,
 		deleteFiles:   *deleteFiles,
 		logFile:       file,
+		archive:       *archive,
 	}
 
 	if err := run(*root, os.Stdout, launchConfigs); err != nil {
@@ -77,6 +81,11 @@ func run(rootDir string, out io.Writer, launchConfig config) error {
 			// If list was explicitly set, don't do anything else
 			if launchConfig.listFiles {
 				return listFile(path, out)
+			}
+
+			// Archive Files:
+			if launchConfig.archive != "" {
+				return archiveFile(launchConfig.archive, rootDir, path)
 			}
 
 			// Delete Files:
