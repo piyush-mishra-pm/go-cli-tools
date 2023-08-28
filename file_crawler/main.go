@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -17,11 +18,14 @@ type config struct {
 	listFiles bool
 	// Delete files"
 	deleteFiles bool
+	// log File
+	logFile io.Writer
 }
 
 func main() {
 	// Parsing command line flags
 	root := flag.String("root", ".", "Root directory to start crawling")
+	logFile := flag.String("log", "", "Logs delete ops")
 	// Action options
 	listFiles := flag.Bool("list-file", false, "Only List files")
 	deleteFiles := flag.Bool("delete-file", false, "Delete files")
@@ -30,11 +34,26 @@ func main() {
 	minSize := flag.Int64("min-size", 0, "Minimum file size")
 	flag.Parse()
 
+	// Open log file (if log file provided)
+	var (
+		file = os.Stdout
+		err  error
+	)
+	if *logFile != "" {
+		file, err = os.OpenFile(*logFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		defer file.Close()
+	}
+
 	launchConfigs := config{
 		pickExtension: *pickExtension,
 		minSize:       *minSize,
 		listFiles:     *listFiles,
 		deleteFiles:   *deleteFiles,
+		logFile:       file,
 	}
 
 	if err := run(*root, os.Stdout, launchConfigs); err != nil {
@@ -44,6 +63,8 @@ func main() {
 }
 
 func run(rootDir string, out io.Writer, launchConfig config) error {
+
+	onDeleteLoggerFunc := log.New(launchConfig.logFile, "DELETED_FILE:", log.LstdFlags)
 
 	return filepath.Walk(rootDir,
 		func(path string, info os.FileInfo, err error) error {
@@ -60,7 +81,7 @@ func run(rootDir string, out io.Writer, launchConfig config) error {
 
 			// Delete Files:
 			if launchConfig.deleteFiles {
-				return deleteFile(path)
+				return deleteFile(path, onDeleteLoggerFunc)
 			}
 
 			// List is the default option if nothing else was set
