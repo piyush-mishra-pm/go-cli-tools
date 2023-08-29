@@ -6,4 +6,5 @@ use (
 	./markdown_preview
 	./file_crawler
 	./csvColumnCruncher
+	./ciGo
 )
