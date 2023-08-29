@@ -1,5 +1,5 @@
 package add
 
 func add(a, b int) int {
-	return a + c
+	return c + b
 }

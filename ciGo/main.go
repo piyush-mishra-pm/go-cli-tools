@@ -13,27 +13,27 @@ func main() {
 	flag.Parse()
 
 	if err := run(*projDir, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stdout, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(projDir string, out io.Writer) error {
-	if projDir == "" {
-		return fmt.Errorf("❗️ Missing Project directory: %w", ErrValidation)
+func run(proj string, out io.Writer) error {
+	if proj == "" {
+		return fmt.Errorf("Project directory is required: %w", ErrValidation)
 	}
 
 	args := []string{"build", ".", "errors"}
 
 	cmd := exec.Command("go", args...)
 
-	cmd.Dir = projDir
+	cmd.Dir = proj
 
 	if err := cmd.Run(); err != nil {
-		return &errStep{step: "go build", msg: "❗️ 'go build' failed", cause: err}
+		return &stepErr{step: "go build", msg: "go build failed", cause: err}
 	}
 
-	_, err := fmt.Fprintln(out, "✅ Go Build: SUCCESS")
+	_, err := fmt.Fprintln(out, "Go Build: SUCCESS")
 
 	return err
 }
