@@ -1,3 +1,7 @@
 benchmark
 benchresults00m.txt
+benchresults01m.txt
+benchresults02m.txt
 cpu00.pprof
+mem00.pprof
+trace01.out
