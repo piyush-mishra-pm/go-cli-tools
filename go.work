@@ -7,4 +7,5 @@ use (
 	./file_crawler
 	./csvColumnCruncher
 	./ciGo
+	./port_scan
 )
