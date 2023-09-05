@@ -26,6 +26,9 @@ func server() {
 		fmt.Fprintf(w, "Fib, %q", fibonacciCalculator(r1.Intn(1000_000)))
 	})
 
+	// SQL-Lite endpoint.
+	sqlLiteTestResponse()
+
 	fmt.Println("Server listening @ Port 8080:")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

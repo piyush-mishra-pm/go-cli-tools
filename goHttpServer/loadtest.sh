@@ -15,3 +15,7 @@ echo "# # # # # # # # # # # # # # # # # # # # # # # # # #"
 echo "# # # #  Testing Fibonacci calculation (Iterative) of random number in 1:1000_000 # # #"
 hey -n 50000 -m GET http://localhost:8080/fibonacci
 echo "# # # # # # # # # # # # # # # # # # # # # # # # # #"
+
+echo "# # # #  Testing SQL Lite # # #"
+hey -n 50000 -m GET http://localhost:8080/sql-lite
+echo "# # # # # # # # # # # # # # # # # # # # # # # # # #"
