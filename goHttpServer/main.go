@@ -27,10 +27,15 @@ func server() {
 	})
 
 	// SQL-Lite endpoint.
-	sqlLiteTestResponse()
+	initDb()
+	time.Sleep(time.Second * 2)
+	http.HandleFunc("/sql-lite", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Sql-lite, %s", getQueryResult())
+	})
 
 	fmt.Println("Server listening @ Port 8080:")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+	defer closeDb()
 }
 
 // Picks a random number between 1 to 10,000 and calculates its Fib.
