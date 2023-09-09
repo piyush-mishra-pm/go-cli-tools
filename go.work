@@ -9,4 +9,5 @@ use (
 	./ciGo
 	./port_scan
 	./goHttpServer
+	./alexEllisEverydayGolang/hmacHasher
 )
